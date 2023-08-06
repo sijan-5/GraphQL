@@ -1,53 +1,73 @@
 package com.example.graphql
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.widget.Button
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.graphql.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    lateinit var button : Button
-    lateinit var updateButton : Button
-    lateinit var deleteButton : Button
+    lateinit var binding: ActivityMainBinding
+
+    val adapter = UserAdapter() {
+        viewModel.deleteUser(it)
+    }
+
     private val viewModel: MyViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
 
-        myObserver()
-        button = findViewById(R.id.myButton)
-        updateButton = findViewById(R.id.updateButton)
-        deleteButton = findViewById(R.id.deleteButton)
-        button.setOnClickListener {
 
-            viewModel.createUser()
-        }
-        updateButton.setOnClickListener {
-            viewModel.updateUser()
-        }
+        setUpRecyclerView()
+        dataObserver()
 
-        deleteButton.setOnClickListener {
-            viewModel.deleteUser()
-        }
     }
 
-    fun myObserver()
-    {
+    private fun dataObserver() {
         lifecycleScope.launch {
 
             viewModel.apply {
-                getAlbum()
+                getUser(3)
+                createUser("ABC", "ABC08@gmail.com", "ABC800")
+                updateUser("123")
+                getAllUsers()
+
             }
-            viewModel.liveData.observe(this@MainActivity){
+            viewModel.liveData.observe(this@MainActivity) {
                 Log.d("this", it.toString())
+            }
+
+            val userInfoList = mutableListOf<UserInfo>()
+
+            viewModel.allUserData.observe(this@MainActivity) {
+                it.users?.data?.map {
+                    it?.let {
+                        userInfoList.add(UserInfo(it.id, it.name, it.email, it.address?.street))
+                    }
+                }
+                adapter.submitList(userInfoList)
             }
         }
     }
+
+    private fun setUpRecyclerView() {
+        binding.userInfoRecyclerView.apply {
+            layoutManager =
+                LinearLayoutManager(this@MainActivity, LinearLayoutManager.VERTICAL, false)
+            adapter = this@MainActivity.adapter
+        }
+    }
 }
+
+
+data class UserInfo(val id: String?, val name: String?, val email: String?, val address: String?)
 

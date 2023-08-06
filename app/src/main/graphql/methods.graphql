@@ -10,15 +10,12 @@ query GetMyUser($userId: ID!) {
     }
 }
 
-mutation CreateUser($name: String!, $email: String!, $username: String!) {
-    createUser(input: {
-        name: $name
-        email: $email
-        username: $username})
+mutation CreateMyUser($createUserInput: CreateUserInput!) {
+    createUser(input: $createUserInput)
     {
-        name
-        email
         username
+        email
+        name
     }
 }
 
@@ -36,5 +33,20 @@ mutation UpdateMyUser($id : ID!, $updateUserInput : UpdateUserInput!)
 mutation DeleteUser($id : ID!)
 {
     deleteUser(id: $id)
+}
+
+
+query GetAllUsers($options: PageQueryOptions) {
+    users(options: $options) {
+        data {
+            id
+            name
+            username
+            email
+            address {
+                street
+            }
+        }
+    }
 }
 

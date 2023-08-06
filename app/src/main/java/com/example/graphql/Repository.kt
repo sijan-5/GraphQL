@@ -3,73 +3,64 @@ package com.example.graphql
 
 import android.util.Log
 import com.apollographql.apollo3.ApolloClient
-import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
+import com.example.graphql.type.CreateUserInput
 import com.example.graphql.type.UpdateUserInput
-import java.util.*
-
-
 import javax.inject.Inject
-import kotlin.jvm.optionals.getOrNull
 
 
 class Repository @Inject constructor(val apolloClient: ApolloClient) {
 
-    suspend fun getData() = apolloClient.query(GetMyUserQuery("3")).execute()
+    suspend fun getUser(id: Int) = apolloClient.query(GetMyUserQuery(id.toString())).execute()
 
-    suspend fun createUser(name: String, email: String, userName: String) : Boolean {
 
-        val response = try {
+    suspend fun createUser(name: String, email: String, userName: String) {
+
+        try {
             apolloClient.mutation(
-                CreateUserMutation(
-                    name = name,
-                    email = email,
-                    username = userName
+                CreateMyUserMutation(
+                    CreateUserInput(
+                        name = name,
+                        username = email,
+                        email = userName
+                    )
                 )
             ).execute()
-
-        }
-        catch (e : ApolloException)
-        {
-            Log.d("input error", "error input")
-            return false
+        } catch (e: ApolloException) {
+            Log.d("input error", "${e.message}")
         }
 
-        if (response.hasErrors())
-        {
-            Log.d("response error", "response error")
-            return false
-        }
-
-        Log.d("success", "no error while input")
-
-        return true
-    }
-
-//
-    suspend fun updateUser()
-    {
-        val updateResponse = try {
-            apolloClient.mutation(UpdateMyUserMutation("123", UpdateUserInput(name = com.apollographql.apollo3.api.Optional.present("Updated Name") )))
-        }
-        catch (e : ApolloException)
-        {
-            Log.d("update error", "update error ")
-        }
-
-        Log.d("updated", "updated")
+        Log.d("success", "user created successfully")
     }
 
 
-    suspend fun deleteUser()
-    {
-        val deleteResponse = apolloClient.mutation(DeleteUserMutation("12")).execute()
-        if(!deleteResponse.hasErrors())
-        {
-            Log.d("deleted","deletion successful")
+     fun updateUser(id: String?) {
+        try {
+            apolloClient.mutation(
+                UpdateMyUserMutation(
+                    id!!,
+                    UpdateUserInput(name = com.apollographql.apollo3.api.Optional.present("Updated Name"))
+                )
+            )
+        } catch (e: ApolloException) {
+            Log.d("update", "${e.message}")
         }
 
+        Log.d("update", "update successful")
     }
+
+
+    suspend fun deleteUser(id: String?) {
+        try {
+            apolloClient.mutation(DeleteUserMutation(id!!)).execute()
+        } catch (e: ApolloException) {
+            Log.d("delete", "${e.message}")
+        }
+        Log.d("delete", "deletion successful")
+
+    }
+
+    suspend fun getAllUser() = apolloClient.query(GetAllUsersQuery()).execute()
 
 }
 
